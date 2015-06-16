@@ -1,35 +1,14 @@
 package io.dbmaster.tools
 
-import groovy.json.StringEscapeUtils
-import groovy.sql.Sql
-import io.dbmaster.tools.login.audit.*
-
-import java.sql.Connection
-import java.sql.ResultSet
-import java.sql.Statement
-import java.util.concurrent.CancellationException
-import java.util.regex.Matcher
-import java.util.regex.Pattern
+// TODO - move DbMaster class to API
+import com.branegy.scripting.DbMaster
+import com.branegy.dbmaster.util.NameMap
+import org.slf4j.Logger
 
 import javax.naming.*
 import javax.naming.directory.*
 import javax.naming.ldap.*
 
-import org.slf4j.Logger
-
-import com.branegy.dbmaster.connection.ConnectionProvider
-import com.branegy.dbmaster.connection.JdbcConnector
-import com.branegy.dbmaster.custom.CustomFieldConfig
-import com.branegy.dbmaster.custom.CustomObjectEntity
-import com.branegy.dbmaster.custom.CustomObjectService
-import com.branegy.dbmaster.custom.CustomObjectTypeEntity
-import com.branegy.dbmaster.custom.CustomFieldConfig.Type
-import com.branegy.dbmaster.custom.field.server.api.ICustomFieldService
-import com.branegy.dbmaster.model.*
-import com.branegy.dbmaster.util.NameMap
-import com.branegy.scripting.DbMaster
-import com.branegy.service.connection.api.ConnectionService
-import com.branegy.service.core.QueryRequest
 
 public class LdapUserCache { 
     
@@ -98,7 +77,7 @@ public class LdapUserCache {
                 
                 def account = [ "name" : name, "dn" : dn, "members" : members, 
                                 "member_of" : member_of, "title": title, 
-                                "disabled" : userAccountControl, "domain": domain]
+                                "accountControl" : userAccountControl, "domain": domain]
                 // logger.debug(account.toString());
                 ldapAccountByDN[dn] = account
                 ldapAccountByName[domain+"\\"+name] = account
