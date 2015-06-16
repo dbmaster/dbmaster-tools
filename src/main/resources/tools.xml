@@ -1,0 +1,61 @@
+<tools>
+    <tool id="ldap-query" title="LDAP::Query" projectTypes="inventory">
+        <description>Runs queries against LDAP or Active Directory</description>
+
+
+        <help><![CDATA[
+<h3>Parameters</h3>
+<table class="parameters" border="1" style="border:solid thin">
+<tr><td>Parameter</td><td>description</td><td>type</td><td>required</td><td>default value</td></tr>
+<tr><td>Server</td><td>Active Directory connection</td><td>string</td><td>yes</td><td></td></tr>
+<tr><td>Query</td><td>Ldap-style query</td><td>string</td><td>yes</td><td></td></tr>
+<tr><td>Base Context</td><td>Ldap context to start search</td><td>string</td><td>yes</td><td></td></tr>
+<tr><td>Return Attributes</td><td>List of attributes separated by semicolon. Will return all attributes when empty</td><td>string</td><td>no</td><td></td></tr>
+</table>
+
+        ]]></help>
+
+
+
+        <parameters>
+            <parameter name="p_server"      title="Ldap Server"       type="string" required="true" suggestion="project_ldap_connections" />
+            <parameter name="p_base"        title="Base Context"      type="string" required="false" width="400" />
+            <parameter name="p_attributes"  title="Return Attributes" type="string" required="false" width="400" />
+            <parameter name="p_query"       title="Query"             type="text" required="true"    width="120" height="4" />
+
+        </parameters>
+
+        <output  script="ldap-query.groovy" type="html" />
+    </tool>
+
+
+    <tool id="ldap-create-user" title="LDAP::Create User" projectTypes="inventory" visible="false">
+        <description>Creates ldap user</description>
+
+        <parameters>
+            <parameter name="p_server"      title="Ldap Server"           type="string" required="true" suggestion="project_ldap_connections" />
+            <parameter name="p_context"     title="Base Context"     type="string" required="true" />
+ 
+            <parameter name="p_first_name"  title="First Name"       type="string" required="false" />
+            <parameter name="p_last_name"   title="Last Name"        type="string" required="false" />
+            <parameter name="p_email"       title="Email"            type="string" required="false" />
+            <parameter name="p_company"     title="Company"          type="string" required="false" />
+
+            <parameter name="p_username"    title="Username"         type="string" required="false" />
+            <parameter name="p_password"    title="Password"         type="string" required="false" />
+        </parameters>
+
+        <output  script="ldap-create-user.groovy" type="html" />
+    </tool>
+
+    <tool id="ldap-group-members" title="LDAP::Group members" projectTypes="inventory">
+        <description></description>
+
+        <parameters>
+            <parameter name="p_groups" title="Group Names (One per line)" type="text" required="true" width="60" />
+        </parameters>
+
+        <output  script="ldap-group-members.groovy" type="html" />
+    </tool>
+
+</tools>
