@@ -29,7 +29,6 @@ public class LdapUserCache {
             logger.info("Loading users and group from  ${connection.name}")
             def ldapSearch = new LdapSearch(dbm, logger)    
             def ldapQuery  = "(|(objectClass=user)(objectClass=group))"
-            // def ldap_attributes = "member;objectClass;sAMAccountName;distinguishedName;description;memberOf;name"
             def ldapAttributes = "member;memberOf;sAMAccountName;distinguishedName;name;userAccountControl"
             logger.info("Retrieving ldap accounts and groups")
             
@@ -68,17 +67,12 @@ public class LdapUserCache {
                 def dn = attributes.get("distinguishedName")?.get()
                 def members = getAll(attributes.get("member"))
                 def member_of = getAll(attributes.get("memberOf"))
-                // def domain = attributes.get("msSFU30NisDomain")?.get()
-                // 
                 def userAccountControl = attributes.get("userAccountControl")?.get()
                 def title = attributes.get("name")?.get();
-                
-                // def object_class = getAll(attributes.get("objectClass"))
                 
                 def account = [ "name" : name, "dn" : dn, "members" : members, 
                                 "member_of" : member_of, "title": title, 
                                 "accountControl" : userAccountControl, "domain": domain]
-                // logger.debug(account.toString());
                 ldapAccountByDN[dn] = account
                 ldapAccountByName[domain+"\\"+name] = account
             }
