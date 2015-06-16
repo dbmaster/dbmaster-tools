@@ -33,8 +33,7 @@
                         <Author>slava.christin</Author>
                         <Bundle-SymbolicName>${project.artifactId}</Bundle-SymbolicName>
                         <Import-Package>io.dbmaster.api;version="1.10.0"</Import-Package>
-                        <Export-Package>io.dbmaster.tools.;version="${release.version}"</Export-Package>
-
+                        <Export-Package>io.dbmaster.tools;version="${release.version}"</Export-Package>
                     </instructions>
                 </configuration>
             </plugin>

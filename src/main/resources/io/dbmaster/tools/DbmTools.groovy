@@ -1,4 +1,4 @@
-package io.dbmaster.tools;
+package io.dbmaster.tools
 
 import groovy.sql.Sql
 
@@ -63,14 +63,14 @@ public class DbmTools {
     
     }
 
-    public String rsToString(Object data) {
+    public Object convertObject(Object data) {
         if (data == null) {
             return null
         } else if (data instanceof java.sql.Clob) {
             Reader reader = data.getCharacterStream();
             return IOUtils.toString(reader);
         } else {
-            return data.toString()
+            return data
         }
     }
 
@@ -92,12 +92,20 @@ public class DbmTools {
         }
 
         int rows = 0
-        while (rs.next()){
+        Object cell
+        while (rs.next()) {
             out.print "<tr>"
-            for (int i=1; i<=columnCount; ++i){
-                out.println "<td>${ rsToString(rs.getObject(i)) }</td>"
+            for (int i=1; i<=columnCount; ++i) {
+                cell = convertObject(rs.getObject(i))
+                if (cell instanceof Number) {
+                    out.print "<td align=\"right\">"
+                } else {
+                    out.print "<td>"
+                }
+                out.print cell==null ? "NULL" : cell.toString()
+                out.print "</td>"
             }
-            out.print "</tr>"
+            out.println "</tr>"
             rows = rows + 1
         }
         if (printHeader) {
