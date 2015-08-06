@@ -32,8 +32,8 @@ public class LdapUserCache {
             def ldapAttributes = "member;memberOf;sAMAccountName;distinguishedName;name;userAccountControl"
             logger.info("Retrieving ldap accounts and groups")
             
-            String ldapContext = "";
-            String domain = "";
+            String ldapContext = null
+            String domain = null
             connection.properties.each { p->
                 if (p.key == "defaultContext") {
                     ldapContext = p.value
@@ -44,37 +44,46 @@ public class LdapUserCache {
                      logger.info("Domain = ${domain}")
                 }
             }
-            
-            def search_results = ldapSearch.search(connection.name, ldapContext, ldapQuery, ldapAttributes)
-            
-            def getAll = { ldapAttribute ->
-                def result = null
-                if (ldapAttribute!=null) {
-                    result = []
-                    def values = ldapAttribute.getAll()
-                    while (values.hasMore()) {
-                        result.add(values.next().toString())
-                    }
-                }
-                return result
+
+            if (ldapContext==null) {
+                logger.warn("Define property 'defaultContext' for connection '${connection.name}'")
+            }
+            if (domain==null) {
+                logger.warn("Define property 'domain' for connection '${connection.name}'")
             }
             
-            logger.info("Found ${search_results.size()} records")
-            
-            search_results.each { result_item ->  
-                Attributes attributes = result_item.getAttributes()
-                def name = attributes.get("sAMAccountName")?.get()
-                def dn = attributes.get("distinguishedName")?.get()
-                def members = getAll(attributes.get("member"))
-                def member_of = getAll(attributes.get("memberOf"))
-                def userAccountControl = attributes.get("userAccountControl")?.get()
-                def title = attributes.get("name")?.get();
+            if (ldapContext!=null && domain!=null) {
+                def search_results = ldapSearch.search(connection.name, ldapContext, ldapQuery, ldapAttributes)
                 
-                def account = [ "name" : name, "dn" : dn, "members" : members, 
-                                "member_of" : member_of, "title": title, 
-                                "accountControl" : userAccountControl, "domain": domain]
-                ldapAccountByDN[dn] = account
-                ldapAccountByName[domain+"\\"+name] = account
+                def getAll = { ldapAttribute ->
+                    def result = null
+                    if (ldapAttribute!=null) {
+                        result = []
+                        def values = ldapAttribute.getAll()
+                        while (values.hasMore()) {
+                            result.add(values.next().toString())
+                        }
+                    }
+                    return result
+                }
+                
+                logger.info("Found ${search_results.size()} records")
+                
+                search_results.each { result_item ->  
+                    Attributes attributes = result_item.getAttributes()
+                    def name = attributes.get("sAMAccountName")?.get()
+                    def dn = attributes.get("distinguishedName")?.get()
+                    def members = getAll(attributes.get("member"))
+                    def member_of = getAll(attributes.get("memberOf"))
+                    def userAccountControl = attributes.get("userAccountControl")?.get()
+                    def title = attributes.get("name")?.get();
+                    
+                    def account = [ "name" : name, "dn" : dn, "members" : members, 
+                                    "member_of" : member_of, "title": title, 
+                                    "accountControl" : userAccountControl, "domain": domain]
+                    ldapAccountByDN[dn] = account
+                    ldapAccountByName[domain+"\\"+name] = account
+                }
             }
         }
      /*

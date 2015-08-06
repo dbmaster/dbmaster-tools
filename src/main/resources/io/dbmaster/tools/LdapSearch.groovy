@@ -12,8 +12,8 @@ import org.slf4j.Logger
 
 public class LdapSearch {
     
-    private DbMaster dbm;
-    private Logger logger;
+    private DbMaster dbm
+    private Logger logger
     
     public LdapSearch(DbMaster dbm, Logger logger) {
         this.dbm = dbm;
