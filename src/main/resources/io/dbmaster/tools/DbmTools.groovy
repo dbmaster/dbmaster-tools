@@ -4,8 +4,9 @@ import groovy.sql.Sql
 
 import com.branegy.dbmaster.database.api.ModelService
 import com.branegy.dbmaster.model.*
-import com.branegy.service.connection.api.ConnectionService
 import com.branegy.dbmaster.connection.ConnectionProvider
+import com.branegy.service.connection.api.ConnectionService
+import com.branegy.service.base.api.ProjectService
 
 import org.slf4j.Logger
 import com.branegy.scripting.DbMaster
@@ -21,18 +22,24 @@ import org.apache.commons.io.IOUtils
 
 public class DbmTools {
 
-    protected DbMaster dbm
-    protected Logger logger
+    public DbMaster dbm
+    public Logger logger
     protected PrintWriter out
+    protected String projectName
     
     DbmTools(dbm, logger, out) {
         this.dbm    = dbm
         this.logger = logger
         this.out    = out
+        projectName =  dbm.getService(ProjectService.class).getCurrentProject().getName()
     }
     
     public String getCurrentUser() {
         return com.branegy.persistence.CurrentUserService.getCurrentUser()
+    }
+    
+    public String getCurrentProject() {
+        return projectName
     }
     
     public getConnection(String dbServer, String dbName = null) {
@@ -154,5 +161,27 @@ public class DbmTools {
             updateCount = ps.getUpdateCount()
         }
         return queryResult
+    }
+    
+    public String toURL (String link) {
+        return link==null ? "NULL" : java.net.URLEncoder.encode(link).replaceAll("\\+", "%20")
+    }
+    
+    public String linkToObject(String type, String serverName, String objectName) {
+        def prefix = "#inventory/project:${toURL(projectName)}"
+        if (type.equals("Application")) {
+            return "${prefix}/applications/application:${toURL(objectName)}"
+        } else if (type.equals("Server")) {
+            return  "${prefix}/servers/server:${toURL(serverName)}"
+        } else if (type.equals("Database")) {
+            return  "${prefix}/databases/connection:${toURL(serverName)},db:${toURL(objectName)}"
+        } else if (type.equals("Connection")) {
+            return  "${prefix}/connections/connection:${toURL(serverName)}" 
+        } else if (type.equals("Job")) {
+            // TODO we do not have any information about jobs in dbmaster yet
+            return  "${prefix}/databases" 
+        } else {
+            throw new RuntimeException("Object type ${type} was not expected")
+        }
     }
 }
