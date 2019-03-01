@@ -42,17 +42,17 @@ public class DbmTools {
         return projectName
     }
     
-    public getConnection(String dbServer, String dbName = null) {
+    public Connection getConnection(String dbServer, String dbName = null) {
         logger.info("Connecting to ${dbServer} ${dbName?:""}")
         def connectionSrv = dbm.getService(ConnectionService.class)
         
         def connectionInfo = connectionSrv.findByName(dbServer)
-        def connection = ConnectionProvider.getConnector(connectionInfo).getJdbcConnection(dbName)
+        def connection = ConnectionProvider.get().getJdbcConnection(connectionInfo,dbName)
         dbm.closeResourceOnExit(connection)
         return connection
     }
     
-    public connect (String databaseName) {
+    public Connection connect (String databaseName) {
         logger.info("Connecting to ${databaseName}")
         def connectionSrv = dbm.getService(ConnectionService.class)
         
@@ -61,7 +61,7 @@ public class DbmTools {
         def serverName = parts.length>=3 ? parts[0]+parts[1] : parts[0];
         def dbName     = parts[parts.length-1];
         def connectionInfo = connectionSrv.findByName(serverName)
-        def connection = ConnectionProvider.getConnector(connectionInfo).getJdbcConnection(dbName)
+        def connection = ConnectionProvider.get().getJdbcConnection(connectionInfo,dbName)
         dbm.closeResourceOnExit(connection)
         return connection
     }

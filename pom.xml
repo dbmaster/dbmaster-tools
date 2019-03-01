@@ -9,7 +9,7 @@
    </parent>
 
    <artifactId>dbmaster-tools</artifactId>
-   <version>0.1.7</version>
+   <version>0.1.8</version>
    <packaging>bundle</packaging>
 
    <name>DBMaster Tools</name>
