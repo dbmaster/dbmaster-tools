@@ -8,10 +8,10 @@ import com.branegy.dbmaster.connection.ConnectionProvider
 
 connectionSrv = dbm.getService(ConnectionService.class)
 connectionInfo = connectionSrv.findByName(p_server)
-connector = ConnectionProvider.getConnector(connectionInfo)
+dialect = ConnectionProvider.get().getDialect(connectionInfo)
+dbm.closeResourceOnExit(dialect)
 
-def context = connector.connect().getContext()
-dbm.closeResourceOnExit(context)
+def context = dialect.getContext()
 
 def encryptLdapPassword(String algorithm, String password) {
         MessageDigest md = MessageDigest.getInstance(algorithm)
