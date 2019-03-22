@@ -6,6 +6,7 @@ import javax.naming.ldap.*
 
 import com.branegy.service.connection.api.ConnectionService
 import com.branegy.dbmaster.connection.ConnectionProvider
+import com.branegy.dbmaster.connection.Dialect
 
 import com.branegy.scripting.DbMaster
 import org.slf4j.Logger
