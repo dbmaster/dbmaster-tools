@@ -51,7 +51,10 @@ public class LdapSearch {
             }
     
             def dirContext = dialect.getContext()
-            context = new  InitialLdapContext(dirContext.getEnvironment(), null)
+            def env = dirContext.getEnvironment();
+            env.put("java.naming.ldap.attributes.binary", "objectSid objectGUID");
+
+            context = new  InitialLdapContext(env, null)
     
             SearchControls ctrl = new SearchControls()
             // a candidate for script parameter
@@ -97,7 +100,7 @@ public class LdapSearch {
                     if(cookie==null) {
                         break;
                     } else {
-                        logger.debug("Switching to next page")
+                        logger.debug("Loading next page")
                     }
     
                     // Re-activate paged results
@@ -110,7 +113,9 @@ public class LdapSearch {
             }
             return result;
         } finally {
-            com.branegy.util.IOUtils.closeQuietly(dialect);
+            if (dialect!=null) {
+                com.branegy.util.IOUtils.closeQuietly(dialect);
+            }
             context.close();
         }
     }

@@ -8,7 +8,8 @@ import org.slf4j.Logger
 import javax.naming.*
 import javax.naming.directory.*
 import javax.naming.ldap.*
-
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
 
 public class LdapUserCache { 
     
@@ -17,6 +18,7 @@ public class LdapUserCache {
     
     public NameMap ldapAccountByDN   = new NameMap()
     public NameMap ldapAccountByName = new NameMap()
+    public NameMap ldapAccountBySid  = new NameMap()
 
     public LdapUserCache(DbMaster dbm, Logger logger) {
         this.dbm = dbm
@@ -29,7 +31,7 @@ public class LdapUserCache {
             logger.info("Loading users and group from  ${connection.name}")
             def ldapSearch = new LdapSearch(dbm, logger)    
             def ldapQuery  = "(|(objectClass=user)(objectClass=group))"
-            def ldapAttributes = "member;memberOf;sAMAccountName;distinguishedName;name;userAccountControl"
+            def ldapAttributes = "member;memberOf;sAMAccountName;distinguishedName;name;userAccountControl;objectSid"
             logger.info("Retrieving ldap accounts and groups")
             
             String ldapContext = null
@@ -77,44 +79,22 @@ public class LdapUserCache {
                     def member_of = getAll(attributes.get("memberOf"))
                     def userAccountControl = attributes.get("userAccountControl")?.get()
                     def title = attributes.get("name")?.get();
-                    
+                    def sid = attributes.get("objectSid")?.get();
+                    String sidStr = convertSidToStr( sid )
+                    String sidHex = bytesToHex(sid)
+
+                    // logger.warn("name="+ name + " sid "+ sidStr + " hex="+ sidHex +" class " + sid.getClass().getName());
+
                     def account = [ "name" : name, "dn" : dn, "members" : members, 
                                     "member_of" : member_of, "title": title, 
-                                    "accountControl" : userAccountControl, "domain": domain]
+                                    "accountControl" : userAccountControl, "domain": domain, "sidStr" : sidStr, "sidHex" : sidHex]
+
                     ldapAccountByDN[dn] = account
                     ldapAccountByName[domain+"\\"+name] = account
+                    ldapAccountBySid[sidHex] = account
                 }
             }
         }
-     /*
-        def xs = new com.thoughtworks.xstream.XStream()
-        
-          
-        logger.info("Loading accounts by DN")
-        def fr = new java.io.BufferedReader(new FileReader("ldapAccountByDN.xml"))
-        ldapAccountByDN = xs.fromXML(fr)
-        fr.close()
-        
-        ldapAccountByDN.values().each { acc ->
-            ldapAccountByName[acc.domain+"\\"+acc.name] = acc
-        }
-        logger.info("Done")
-/*
-    logger.info("Loading accounts by name")        
-        fr = new java.io.BufferedReader(new FileReader("ldapAccountByName.xml"))
-        ldapAccountByName = xs.fromXML(fr)
-        fr.close()
-logger.info("done")
-*/     /* 
-
-        def pw = new java.io.PrintWriter("ldapAccountByDN.xml")
-        xs.toXML(ldapAccountByDN, pw)
-        pw.close()
-      
-        pw = new java.io.PrintWriter("ldapAccountByName.xml")
-        xs.toXML(ldapAccountByName, pw)
-        pw.close()
-    */
     }
     
     public List<String> getSubGroups (List<String> list, account) {
@@ -133,4 +113,42 @@ logger.info("done")
         return list
     }
 
+
+    /*
+     * The binary data structure, from http://msdn.microsoft.com/en-us/library/cc230371(PROT.10).aspx:
+     *   byte[0] - Revision (1 byte): An 8-bit unsigned integer that specifies the revision level of the SID structure. This value MUST be set to 0x01.
+     *   byte[1] - SubAuthorityCount (1 byte): An 8-bit unsigned integer that specifies the number of elements in the SubAuthority array. The maximum number of elements allowed is 15.
+     *   byte[2-7] - IdentifierAuthority (6 bytes): A SID_IDENTIFIER_AUTHORITY structure that contains information, which indicates the authority under which the SID was created. It describes the entity that created the SID and manages the account.
+     *               Six element arrays of 8-bit unsigned integers that specify the top-level authority 
+     *               big-endian!
+     *   and then - SubAuthority (variable): A variable length array of unsigned 32-bit integers that uniquely identifies a principal relative to the IdentifierAuthority. Its length is determined by SubAuthorityCount. 
+     *              little-endian!
+     */
+
+	public static String convertSidToStr(byte[] sid) {
+		if (sid==null) return null;
+		if (sid.length<8 || sid.length % 4 != 0) return "";
+		StringBuilder sb = new StringBuilder();
+		sb.append("S-").append(sid[0]);
+		int c = sid[1]; // Init with Subauthority Count.
+		ByteBuffer bb = ByteBuffer.wrap(sid);
+		sb.append("-").append((long)bb.getLong() & 0XFFFFFFFFFFFFL);
+		bb.order(ByteOrder.LITTLE_ENDIAN); // Now switch.
+		for (int i=0; i<c; i++) { // Create Subauthorities.
+			sb.append("-").append((long)bb.getInt() & 0xFFFFFFFFL);
+		}        
+		return sb.toString();    
+	}
+
+	// https://stackoverflow.com/questions/9655181/how-to-convert-a-byte-array-to-a-hex-string-in-java
+	private static final char[] HEX_ARRAY = "0123456789ABCDEF".toCharArray();
+	public static String bytesToHex(byte[] bytes) {
+		char[] hexChars = new char[bytes.length * 2];
+		for (int j = 0; j < bytes.length; j++) {
+			int v = bytes[j] & 0xFF;
+			hexChars[j * 2] = HEX_ARRAY[v >>> 4];
+			hexChars[j * 2 + 1] = HEX_ARRAY[v & 0x0F];
+		}
+		return (new String(hexChars));
+	}
 }
